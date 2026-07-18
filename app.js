@@ -42,7 +42,29 @@ if (!tokenAcceso) {
   }
 }
 
-let saldoActual = 20.00; 
+// =============================================================
+// 🚀 NUEVA LÓGICA: LECTURA EN TIEMPO REAL DESDE GOOGLE SHEETS
+// =============================================================
+
+// Esta función limpia el "$20.00" estático y trae el valor real de la celda E2
+async function obtenerSaldoReal() {
+  const pantallaSaldo = document.getElementById('pantallaSaldo');
+  pantallaSaldo.textContent = "CARGANDO..."; // Efecto visual cyberpunk instantáneo
+  
+  try {
+    const respuesta = await fetch(APPS_SCRIPT_URL, { method: "GET" });
+    const datos = await respuesta.json();
+    
+    // Convertimos lo que responda Google a número flotante válido
+    pantallaSaldo.textContent = `$${parseFloat(datos.saldo).toFixed(2)}`;
+  } catch (error) {
+    pantallaSaldo.textContent = "$0.00";
+    console.error("Error al leer el saldo base de Google Sheets:", error);
+  }
+}
+
+// DISPARADOR: Se ejecuta automáticamente en cuanto la web se abre en el navegador
+window.addEventListener('DOMContentLoaded', obtenerSaldoReal);
 
 async function procesarMovimiento(event, tipo, idModal) {
   event.preventDefault();
@@ -58,14 +80,14 @@ async function procesarMovimiento(event, tipo, idModal) {
   const datosMovimiento = {
     concepto: conceptoInput,
     monto: montoInput,
-    clave: sessionStorage.getItem("SESION_TOKEN") // Se extrae seguro de la memoria de la pestaña
+    clave: sessionStorage.getItem("SESION_TOKEN") 
   };
 
   botonSubmit.disabled = true;
   botonSubmit.textContent = "TRANSMITIENDO...";
 
   try {
-    // Usamos 'no-cors' para saltar las restricciones nativas de Google Apps Script
+    // Mandamos los datos a Google Script de forma segura
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
       mode: "no-cors", 
@@ -73,9 +95,10 @@ async function procesarMovimiento(event, tipo, idModal) {
       body: JSON.stringify(datosMovimiento)
     });
 
-    // Actualización visual local
-    saldoActual += montoInput;
-    document.getElementById('pantallaSaldo').textContent = `$${saldoActual.toFixed(2)}`;
+    // 🔄 REFRESCAR DESDE LA BASE DE DATOS
+    // Esperamos 1.5 segundos para darle tiempo a la celda E2 de recalcular la suma, 
+    // y luego mandamos a llamar a obtenerSaldoReal() para pintar el número exacto.
+    setTimeout(obtenerSaldoReal, 1500); 
     
     formulario.reset();
     cerrarModal(idModal);
