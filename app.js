@@ -49,13 +49,15 @@ if (!tokenAcceso) {
 // Esta función limpia el "$20.00" estático y trae el valor real de la celda E2
 async function obtenerSaldoReal() {
   const pantallaSaldo = document.getElementById('pantallaSaldo');
-  pantallaSaldo.textContent = "CARGANDO..."; // Efecto visual cyberpunk instantáneo
+  pantallaSaldo.textContent = "CARGANDO..."; 
   
   try {
     const respuesta = await fetch(APPS_SCRIPT_URL, { method: "GET" });
-    const datos = await respuesta.json();
     
-    // Convertimos lo que responda Google a número flotante válido
+    // En lugar de respuesta.json(), leemos como texto y luego lo parseamos manualmente
+    const textoRespuesta = await respuesta.text();
+    const datos = JSON.parse(textoRespuesta);
+    
     pantallaSaldo.textContent = `$${parseFloat(datos.saldo).toFixed(2)}`;
   } catch (error) {
     pantallaSaldo.textContent = "$0.00";
