@@ -18,7 +18,7 @@ function cerrarModal(idModal) {
   document.getElementById(idModal).classList.remove('active');
 }
 
-// Cerrar modales con el botón de escape físico de un teclado
+// Cerrar modales con la tecla Escape
 document.addEventListener('keydown', function(e) {
   if (e.key === "Escape") {
     const modales = document.querySelectorAll('.modal-overlay');
@@ -27,11 +27,20 @@ document.addEventListener('keydown', function(e) {
 });
 
 // =============================================================
-// CONEXIÓN TOTALMENTE RESPALDADA POR GOOGLE OAUTH SECURITY
+// SEGURIDAD POR TOKEN DE SESIÓN DINÁMICO (ANTI-BOTS EN GITHUB)
 // =============================================================
 
-// ⚠️ PEGA AQUÍ ABAJO TU URL LARGA OBTENIDA DE GOOGLE APPS SCRIPT
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOW92KR9J3BdP6LVJPcrhIbS-6bWia5A5XqzMF5x5rWRTpAYfujtGVEueTICchmAXegQ/exec";
+const APPS_SCRIPT_URL = "TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUÍ";
+
+// Comprobamos si ya pusiste la clave en esta sesión de navegación
+let tokenAcceso = sessionStorage.getItem("SESION_TOKEN");
+
+if (!tokenAcceso) {
+  tokenAcceso = prompt("SISTEMA FINANCIERO BLOQUEADO\nIntroduzca la llave maestra para iniciar sesión:");
+  if (tokenAcceso) {
+    sessionStorage.setItem("SESION_TOKEN", tokenAcceso);
+  }
+}
 
 let saldoActual = 20.00; 
 
@@ -45,16 +54,18 @@ async function procesarMovimiento(event, tipo, idModal) {
 
   if (tipo === 'gasto') { montoInput = -montoInput; }
 
+  // Empaquetamos los datos agregando la clave dinámica que ingresaste
   const datosMovimiento = {
     concepto: conceptoInput,
-    monto: montoInput
+    monto: montoInput,
+    clave: sessionStorage.getItem("SESION_TOKEN") // Se extrae seguro de la memoria de la pestaña
   };
 
   botonSubmit.disabled = true;
   botonSubmit.textContent = "TRANSMITIENDO...";
 
   try {
-    // El navegador enviará invisiblemente tus credenciales de Google
+    // Usamos 'no-cors' para saltar las restricciones nativas de Google Apps Script
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
       mode: "no-cors", 
@@ -62,7 +73,7 @@ async function procesarMovimiento(event, tipo, idModal) {
       body: JSON.stringify(datosMovimiento)
     });
 
-    // Si pasa el filtro de Google, refresca la pantalla
+    // Actualización visual local
     saldoActual += montoInput;
     document.getElementById('pantallaSaldo').textContent = `$${saldoActual.toFixed(2)}`;
     
@@ -70,7 +81,7 @@ async function procesarMovimiento(event, tipo, idModal) {
     cerrarModal(idModal);
 
   } catch (error) {
-    alert("CRITICAL SECURITY ERROR: El servidor rechazó la transmisión.");
+    alert("CRITICAL ERROR: Fallo en la transmisión hacia la base de datos.");
     console.error(error);
   } finally {
     botonSubmit.disabled = false;
