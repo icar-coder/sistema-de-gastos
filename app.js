@@ -46,24 +46,34 @@ if (!tokenAcceso) {
 // 🚀 NUEVA LÓGICA: LECTURA EN TIEMPO REAL DESDE GOOGLE SHEETS
 // =============================================================
 
-// Esta función limpia el "$20.00" estático y trae el valor real de la celda E2
-async function obtenerSaldoReal() {
+// 1. Esta función global recibirá los datos directo desde Google saltándose el CORS
+window.leerSaldo = function(datos) {
+  const pantallaSaldo = document.getElementById('pantallaSaldo');
+  pantallaSaldo.textContent = `$${parseFloat(datos.saldo).toFixed(2)}`;
+  
+  // Limpieza del script temporal creado en el documento
+  const scriptViejo = document.getElementById('jsonp-google');
+  if (scriptViejo) scriptViejo.remove();
+};
+
+// 2. Esta función crea una etiqueta <script> invisible para conectarse de forma segura
+function obtenerSaldoReal() {
   const pantallaSaldo = document.getElementById('pantallaSaldo');
   pantallaSaldo.textContent = "CARGANDO..."; 
   
-  try {
-    const respuesta = await fetch(APPS_SCRIPT_URL, { method: "GET" });
-    
-    // En lugar de respuesta.json(), leemos como texto y luego lo parseamos manualmente
-    const textoRespuesta = await respuesta.text();
-    const datos = JSON.parse(textoRespuesta);
-    
-    pantallaSaldo.textContent = `$${parseFloat(datos.saldo).toFixed(2)}`;
-  } catch (error) {
-    pantallaSaldo.textContent = "$0.00";
-    console.error("Error al leer el saldo base de Google Sheets:", error);
-  }
+  // Creamos el elemento script de forma dinámica
+  const script = document.createElement('script');
+  script.id = 'jsonp-google';
+  
+  // Le añadimos el parámetro "?callback=leerSaldo" al final de tu URL real
+  script.src = `${APPS_SCRIPT_URL}?callback=leerSaldo&_=${new Date().getTime()}`; // El "_" evita que el navegador guarde caché vieja
+  
+  // Lo inyectamos en la página para que se ejecute la llamada
+  document.body.appendChild(script);
 }
+
+// Mantenemos el disparador automático al abrir la web
+window.addEventListener('DOMContentLoaded', obtenerSaldoReal);
 
 // DISPARADOR: Se ejecuta automáticamente en cuanto la web se abre en el navegador
 window.addEventListener('DOMContentLoaded', obtenerSaldoReal);
