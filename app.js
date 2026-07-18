@@ -30,7 +30,7 @@ document.addEventListener('keydown', function(e) {
 // SEGURIDAD POR TOKEN DE SESIÓN DINÁMICO (ANTI-BOTS EN GITHUB)
 // =============================================================
 
-const APPS_SCRIPT_URL = "TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUÍ";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOW92KR9J3BdP6LVJPcrhIbS-6bWia5A5XqzMF5x5rWRTpAYfujtGVEueTICchmAXegQ/exec";
 
 // Comprobamos si ya pusiste la clave en esta sesión de navegación
 let tokenAcceso = sessionStorage.getItem("SESION_TOKEN");
